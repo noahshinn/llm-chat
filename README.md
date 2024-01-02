@@ -1,4 +1,6 @@
-# LLM in your terminal
+# LLM
+
+Simple utility to ask questions to an llm without leaving your terminal. Named llm-chat for a lack of a better name.
 
 ## To run
 
