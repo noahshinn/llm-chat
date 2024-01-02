@@ -11,7 +11,7 @@ git clone https://github.com/noahshinn/llm-chat
 Run the shell
 
 ```bash
-go run ./cmd/llm-cli --api-key <your OpenAI api key>
+go run ./cmd/llm-chat --api-key <your OpenAI api key>
 ```
 
 Run `exit` to exit the shell.

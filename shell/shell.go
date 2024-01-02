@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"llm-chat/llm"
 	"llm-chat/utils/printx"
+	"llm-chat/utils/stringsx"
 	"os"
 	"strings"
 )
@@ -74,13 +75,17 @@ ScannerLoop:
 			fmt.Print("user: ")
 			continue ScannerLoop
 		case "exit":
-			fmt.Println("\nexiting...")
+			printx.PrintInColor(printx.ColorGray, "\nexiting...")
 			break ScannerLoop
 		case "help":
 			printx.PrintInColor(printx.ColorGray, "This is a simple chat interface.\nTo exit, type \"exit\".")
 			fmt.Print("user: ")
 			continue ScannerLoop
 		default:
+			handleError := func(err error) {
+				printx.PrintInColor(printx.ColorRed, fmt.Sprintf("error: %v", err))
+				print("user: ")
+			}
 			s.History = append(s.History, &llm.Message{
 				Role:    llm.MessageRoleUser,
 				Content: strings.TrimSpace(userMessageText),
@@ -94,36 +99,48 @@ ScannerLoop:
 					Temperature: s.Temperature,
 				})
 				if err != nil {
-					return err
+					handleError(err)
+					continue ScannerLoop
 				}
 				fmt.Print("bot: ")
 				streamResponseText := ""
 				for event := range stream {
 					if event.Error != nil {
-						return event.Error
+						handleError(event.Error)
+						continue ScannerLoop
 					}
 					streamResponseText += event.Text
 					fmt.Print(event.Text)
 				}
 				s.History = append(s.History, &llm.Message{
-					Role: llm.MessageRoleUser,
+					Role:    llm.MessageRoleUser,
+					Content: strings.TrimSpace(streamResponseText),
 				})
+				fmt.Println()
 			} else {
 				response, err := chatModel.Message(ctx, s.History, &llm.MessageOptions{
 					Temperature: s.Temperature,
 				})
 				if err != nil {
-					return err
+					handleError(err)
+					continue ScannerLoop
 				} else if response == nil || response.Content == "" {
-					return fmt.Errorf("empty response")
+					handleError(fmt.Errorf("empty response"))
+					continue ScannerLoop
 				} else if response.FunctionCall != nil {
-					return fmt.Errorf("function call not supported but received: %v", response.FunctionCall)
+					handleError(fmt.Errorf("function call not supported but received: %v", response.FunctionCall))
+					continue ScannerLoop
 				} else {
-					fmt.Println("bot: ", strings.TrimSpace(response.Content))
+					content := strings.TrimSpace(response.Content)
+					display, err := stringsx.AddPossibleSyntaxHighlighting(content)
+					if err != nil {
+						display = content
+					}
+					fmt.Println("bot: ", display)
 					s.History = append(s.History, response)
 				}
 			}
-			fmt.Print("\nuser: ")
+			fmt.Print("user: ")
 		}
 	}
 	return nil

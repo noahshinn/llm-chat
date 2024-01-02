@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	useTurbo := flag.Bool("turbo", false, "Use turbo model")
+	useTurbo := flag.Bool("use-turbo", false, "Use turbo model")
 	openaiApiKey := flag.String("api-key", "", "OpenAI API key")
 	disableStreaming := flag.Bool("disable-streaming", false, "Disable streaming")
 	flag.Parse()
